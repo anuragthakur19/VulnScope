@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Flask/HTML
+instance/
+.env
+
+# OS / Editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log

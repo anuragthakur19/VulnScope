@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VulnScope</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>🔍VulnScope - Website Vulnerability Scanner</h1>
+
+    <form method="POST">
+      <input type="text" name="domain" placeholder="Enter domain (e.g. example.com)" required />
+      <button type="submit">Scan</button>
+    </form>
+
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+      <h2>Scan Result for {{ result.domain }}</h2>
+
+      <button class="summary-btn" onclick="showSummary()">Summary</button>
+
+      <div class="section">
+        <h3>Geo Info</h3>
+        <div class="geo-grid">
+          {% for key, value in result.geo.items() %}
+            <div class="geo-card">
+              <strong>{{ key.replace('_',' ').title() }}</strong>
+              <div>{{ value }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Security Headers</h3>
+        <p><strong>Missing:</strong> {{ result.headers.missing | join(', ') }}</p>
+        <p><strong>Present:</strong> {{ result.headers.present | join(', ') }}</p>
+      </div>
+
+      <div class="section">
+        <h3>Open Ports</h3>
+        {% if result.nmap.open_ports %}
+          <ul>
+            {% for port in result.nmap.open_ports %}
+              <li>{{ port.port }} – {{ port.service }} ({{ port.version }})</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No open ports detected.</p>
+        {% endif %}
+      </div>
+
+      <div class="section">
+        <h3>Raw Nmap Output</h3>
+        <pre>{{ result.nmap.raw_output or "No raw output." }}</pre>
+      </div>
+
+      <div class="section verdict">
+        <h3>Risk Score: {{ result.score }}</h3>
+        <h3>Verdict: {{ result.verdict }}</h3>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if result %}
+  <!-- Summary Modal -->
+  <div id="summary-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="hideSummary()">&times;</span>
+      <h2>📝 Summary</h2>
+      <p>
+        We scanned <strong>{{ result.domain }}</strong>. Based on the findings, the website has a risk level of
+        <strong>{{ result.verdict }}</strong> with a score of <strong>{{ result.score }}</strong>.
+      </p>
+      <p>
+        It had <strong>{{ result.headers.missing | length }}</strong> missing security header{{ 's' if result.headers.missing|length > 1 else '' }}:
+        {{ result.headers.missing | join(', ') }}.
+      </p>
+      <p>
+        Number of open ports found: <strong>{{ result.nmap.open_ports | length }}</strong>.
+      </p>
+      <p>
+        The site appears hosted in <strong>{{ result.geo.city }}, {{ result.geo.country }}</strong> (IP: {{ result.geo.ip }}).
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    function showSummary() {
+      document.getElementById("summary-modal").style.display = "block";
+    }
+    function hideSummary() {
+      document.getElementById("summary-modal").style.display = "none";
+    }
+    window.onclick = function (e) {
+      if (e.target.classList.contains("modal")) hideSummary();
+    };
+  </script>
+</body>
+</html>
